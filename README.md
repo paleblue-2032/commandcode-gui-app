@@ -1,66 +1,66 @@
 # Command Code GUI
 
-A desktop client for [Command Code](https://commandcode.ai), built in Rust with
-[egui](https://github.com/emilk/egui) and the
-[Agent Client Protocol](https://agentclientprotocol.com/) (ACP).
+[Command Code](https://commandcode.ai) のデスクトップクライアントです。Rust と
+[egui](https://github.com/emilk/egui)、
+[Agent Client Protocol](https://agentclientprotocol.com/) (ACP) で実装しています。
 
-The app spawns `commandcode acp` and speaks ACP over stdio, so it reuses the
-existing CLI login and the same sessions as the terminal client.
+アプリは `commandcode acp` を起動し、stdio 経由で ACP を話します。そのため既存の
+CLI ログインと、ターミナルクライアントと同じセッションをそのまま利用できます。
 
-## Features
+## 機能
 
-- Streaming chat with markdown and syntax highlighting
-- Tool call cards, execution status, raw input/output, and inline diffs
-- Permission dialogs backed by `session/request_permission`
-- Session history from `~/.commandcode/projects`, grouped by project
-- Model, reasoning effort, and mode switching from the session bar
-- Context usage indicator
-- Command palette for ACP-advertised slash commands
-- Dark and light themes, configurable accent color and font scale
-- Official Command Code logo and app icon
-- Responsive layout:
-  - sidebar collapses below 620 px
-  - tool details become an overlay below 1080 px
-  - minimum window size is 420×360, so tiling WMs can split 50/50 evenly
+- markdown とシンタックスハイライト付きのストリーミングチャット
+- ツールコールカード、実行ステータス、生の入出力、インライン diff
+- `session/request_permission` に基づく権限ダイアログ
+- `~/.commandcode/projects` のセッション履歴（プロジェクト別にグループ化）
+- セッションバーからモデル・reasoning effort・モードを切り替え
+- コンテキスト使用量インジケーター
+- ACP が公開するスラッシュコマンド用のコマンドパレット
+- ダーク / ライトテーマ、アクセントカラーとフォントスケールの設定
+- 公式 Command Code ロゴとアプリアイコン
+- レスポンシブレイアウト:
+  - 620 px 未満でサイドバーを折りたたみ
+  - 1080 px 未満でツール詳細をオーバーレイ表示
+  - 最小ウィンドウサイズは 420×360 で、タイル型 WM でも 50/50 に分割できる
 
-## Requirements
+## 動作要件
 
-- Command Code CLI in `PATH` and logged in (`commandcode login`)
-- Rust 1.95+ for source builds
-- NixOS/Nix is supported directly through the included flake
+- `PATH` に Command Code CLI があり、ログイン済みであること（`commandcode login`）
+- ソースからビルドする場合は Rust 1.95 以上
+- 同梱の flake により NixOS/Nix を直接サポート
 
-## Run
+## 実行
 
-With Nix:
+Nix を使う場合:
 
 ```bash
 nix run
 ```
 
-For development:
+開発時:
 
 ```bash
 nix develop -c cargo run
 ```
 
-Or, with the graphics libraries and a Rust toolchain available:
+または、グラフィックスライブラリと Rust ツールチェーンが揃っていれば:
 
 ```bash
 cargo run
 ```
 
-The default agent command is:
+デフォルトのエージェントコマンド:
 
 ```text
 commandcode --no-auto-update acp
 ```
 
-`--no-auto-update` avoids writes to the Nix store. Change the binary or
-arguments in Settings, then use “Reconnect agent”.
+`--no-auto-update` は Nix ストアへの書き込みを避けるためのものです。バイナリや
+引数は設定画面で変更し、その後「エージェントを再接続」を実行してください。
 
-### Install through a flake
+### flake からインストール
 
-Add the repository as a flake input:
+リポジトリを flake の input に追加します:
 
 ```nix
 commandcode-gui-app = {
@@ -69,7 +69,7 @@ commandcode-gui-app = {
 };
 ```
 
-Then add the package to home-manager:
+home-manager にパッケージを追加します:
 
 ```nix
 home.packages = [
@@ -77,45 +77,45 @@ home.packages = [
 ];
 ```
 
-The package includes the official icon and a desktop entry, so it also appears
-in application launchers.
+パッケージには公式アイコンとデスクトップエントリが含まれるため、アプリケーション
+ランチャーにも表示されます。
 
-## Keyboard
+## キーボード
 
-| Key | Action |
+| キー | 動作 |
 | --- | --- |
-| `Enter` | Send |
-| `Shift+Enter` | New line |
-| `Ctrl+N` | New session |
-| `Ctrl+K` | Command palette |
-| `Ctrl+,` | Settings |
-| `Esc` | Stop the current turn / close a dialog |
+| `Enter` | 送信 |
+| `Shift+Enter` | 改行 |
+| `Ctrl+N` | 新しいセッション |
+| `Ctrl+K` | コマンドパレット |
+| `Ctrl+,` | 設定 |
+| `Esc` | 現在のターンを停止 / ダイアログを閉じる |
 
-The composer is focused automatically when a session becomes ready.
+セッションの準備が完了すると、入力欄に自動でフォーカスします。
 
-## Configuration
+## 設定
 
-Settings are stored at:
+設定は以下に保存されます:
 
 ```text
 ~/.config/commandcode-gui/settings.json
 ```
 
-Notable options:
+主な項目:
 
 - `agent_binary` / `agent_args`
 - `default_cwd`
-- `theme`: `system`, `dark`, or `light`
-- `accent_color`: RGB array, e.g. `[232, 181, 102]`
+- `theme`: `system`、`dark`、`light`
+- `accent_color`: RGB 配列（例: `[232, 181, 102]`）
 - `font_scale`
 - `show_thoughts`
-- `permission_policy`: `ask`, `auto_allow_reads`, or `yolo`
+- `permission_policy`: `ask`、`auto_allow_reads`、`yolo`
 
-The CJK font is loaded from `COMMANDCODE_GUI_CJK_FONT` when set, otherwise via
-`fc-match "Noto Sans CJK JP"`. The Nix package and devShell set this
-automatically.
+CJK フォントは `COMMANDCODE_GUI_CJK_FONT` が設定されていればそこから、なければ
+`fc-match "Noto Sans CJK JP"` から読み込みます。Nix パッケージと devShell では
+これが自動的に設定されます。
 
-## Development
+## 開発
 
 ```bash
 nix develop -c cargo fmt --check
@@ -123,7 +123,7 @@ nix develop -c cargo clippy --all-targets -- -D warnings
 nix develop -c cargo test
 ```
 
-End-to-end ACP smoke test (creates a real session and asks for a reply):
+ACP のエンドツーエンド・スモークテスト（実際にセッションを作成し、応答を要求します）:
 
 ```bash
 nix develop -c cargo run --example acp_smoke
