@@ -1,5 +1,6 @@
 pub mod acp;
 pub mod app;
+pub mod branding;
 pub mod catalog;
 pub mod diff;
 pub mod markdown;

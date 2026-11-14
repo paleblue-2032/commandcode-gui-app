@@ -45,6 +45,11 @@
           wrapProgram "$out/bin/commandcode-gui-app" \
             --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath runtimeLibs}" \
             --set-default COMMANDCODE_GUI_CJK_FONT "${cjkFont}"
+
+          install -Dm644 assets/commandcode-icon.png \
+            "$out/share/icons/hicolor/192x192/apps/commandcode-gui-app.png"
+          install -Dm644 assets/commandcode-gui-app.desktop \
+            "$out/share/applications/commandcode-gui-app.desktop"
         '';
 
         meta.mainProgram = "commandcode-gui-app";

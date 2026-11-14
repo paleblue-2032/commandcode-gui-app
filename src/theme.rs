@@ -1,14 +1,16 @@
-use egui::{Color32, CornerRadius, FontFamily, FontId, Margin, Stroke, TextStyle, Vec2};
+use std::sync::atomic::{AtomicU32, Ordering};
 
-pub const ACCENT: Color32 = Color32::from_rgb(232, 181, 102);
-pub const ACCENT_DIM: Color32 = Color32::from_rgb(118, 92, 52);
-pub const ACCENT_SOFT: Color32 = Color32::from_rgb(47, 39, 24);
+use egui::{Color32, CornerRadius, FontFamily, FontId, Margin, RichText, Stroke, TextStyle, Vec2};
+
 pub const SUCCESS: Color32 = Color32::from_rgb(124, 201, 154);
 pub const WARNING: Color32 = Color32::from_rgb(230, 195, 106);
 pub const DANGER: Color32 = Color32::from_rgb(230, 119, 119);
 pub const INFO: Color32 = Color32::from_rgb(126, 177, 214);
 
-pub fn apply(ctx: &egui::Context) {
+static ACCENT_RGB: AtomicU32 = AtomicU32::new(0x00E8B566);
+
+pub fn apply(ctx: &egui::Context, accent: Color32) {
+    set_accent(accent);
     let base = (*ctx.global_style()).clone();
 
     let mut dark = base.clone();
@@ -99,11 +101,6 @@ fn customize(style: &mut egui::Style, dark: bool) {
     } else {
         Color32::from_rgb(237, 235, 229)
     };
-    let accent_soft = if dark {
-        ACCENT_SOFT
-    } else {
-        Color32::from_rgb(250, 240, 221)
-    };
 
     let visuals = &mut style.visuals;
     visuals.dark_mode = dark;
@@ -115,11 +112,11 @@ fn customize(style: &mut egui::Style, dark: bool) {
     visuals.text_edit_bg_color = Some(extreme);
     visuals.faint_bg_color = faint;
     visuals.code_bg_color = faint;
-    visuals.hyperlink_color = ACCENT;
+    visuals.hyperlink_color = accent();
     visuals.warn_fg_color = WARNING;
     visuals.error_fg_color = DANGER;
-    visuals.selection.bg_fill = accent_soft;
-    visuals.selection.stroke = Stroke::new(1.0, ACCENT_DIM);
+    visuals.selection.bg_fill = accent_soft();
+    visuals.selection.stroke = Stroke::new(1.0, accent_dim());
     visuals.window_corner_radius = CornerRadius::same(14);
     visuals.menu_corner_radius = CornerRadius::same(10);
     visuals.window_stroke = Stroke::new(1.0, border);
@@ -154,22 +151,48 @@ fn customize(style: &mut egui::Style, dark: bool) {
 
     visuals.widgets.hovered.bg_fill = hovered;
     visuals.widgets.hovered.weak_bg_fill = hovered;
-    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, ACCENT_DIM);
-    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, ACCENT);
+    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, accent_dim());
+    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, accent());
     visuals.widgets.hovered.corner_radius = CornerRadius::same(8);
 
-    visuals.widgets.active.bg_fill = accent_soft;
-    visuals.widgets.active.weak_bg_fill = accent_soft;
-    visuals.widgets.active.bg_stroke = Stroke::new(1.0, ACCENT);
-    visuals.widgets.active.fg_stroke = Stroke::new(
-        1.0,
-        if dark {
-            ACCENT
-        } else {
-            Color32::from_rgb(101, 72, 21)
-        },
-    );
+    visuals.widgets.active.bg_fill = accent_soft();
+    visuals.widgets.active.weak_bg_fill = accent_soft();
+    visuals.widgets.active.bg_stroke = Stroke::new(1.0, accent());
+    visuals.widgets.active.fg_stroke = Stroke::new(1.0, text);
     visuals.widgets.active.corner_radius = CornerRadius::same(8);
+}
+
+pub fn set_accent(color: Color32) {
+    let rgb = ((color.r() as u32) << 16) | ((color.g() as u32) << 8) | color.b() as u32;
+    ACCENT_RGB.store(rgb, Ordering::Relaxed);
+}
+
+pub fn accent() -> Color32 {
+    let rgb = ACCENT_RGB.load(Ordering::Relaxed);
+    Color32::from_rgb(
+        ((rgb >> 16) & 0xff) as u8,
+        ((rgb >> 8) & 0xff) as u8,
+        (rgb & 0xff) as u8,
+    )
+}
+
+pub fn accent_dim() -> Color32 {
+    accent().gamma_multiply(0.62)
+}
+
+pub fn accent_soft() -> Color32 {
+    let color = accent();
+    Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 38)
+}
+
+pub fn accent_text() -> Color32 {
+    let color = accent();
+    let luminance = 0.299 * color.r() as f32 + 0.587 * color.g() as f32 + 0.114 * color.b() as f32;
+    if luminance > 150.0 {
+        Color32::from_rgb(24, 20, 12)
+    } else {
+        Color32::WHITE
+    }
 }
 
 pub fn border(dark: bool) -> Color32 {
@@ -202,17 +225,9 @@ pub fn card_frame(ui: &egui::Ui) -> egui::Frame {
         .inner_margin(Margin::same(12))
 }
 
-pub fn brand(ui: &mut egui::Ui) {
-    let (rect, _) = ui.allocate_exact_size(Vec2::new(22.0, 22.0), egui::Sense::hover());
-    ui.painter()
-        .rect_filled(rect, CornerRadius::same(6), ACCENT);
-    ui.painter()
-        .circle_filled(rect.center(), 3.8, Color32::from_rgb(24, 20, 12));
-}
-
-pub fn accent_button(text: impl Into<egui::WidgetText>) -> egui::Button<'static> {
-    egui::Button::new(text)
-        .fill(ACCENT)
+pub fn accent_button(text: impl Into<String>) -> egui::Button<'static> {
+    egui::Button::new(RichText::new(text.into()).strong().color(accent_text()))
+        .fill(accent())
         .stroke(Stroke::NONE)
         .corner_radius(CornerRadius::same(8))
         .min_size(Vec2::new(0.0, 30.0))

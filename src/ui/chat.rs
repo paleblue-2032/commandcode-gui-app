@@ -4,6 +4,7 @@ use agent_client_protocol::v1::schema::{
 use egui::{Color32, Margin, RichText, Stroke};
 use egui_commonmark::CommonMarkCache;
 
+use crate::branding::Logos;
 use crate::diff;
 use crate::markdown;
 use crate::model::{SessionView, TranscriptItem};
@@ -14,6 +15,7 @@ pub fn draw(
     session: &mut SessionView,
     cache: &mut CommonMarkCache,
     show_thoughts: bool,
+    logos: &Logos,
 ) -> Option<String> {
     let session_id = session.id.clone();
     let title = session
@@ -31,7 +33,7 @@ pub fn draw(
             }
             if session.is_prompting {
                 ui.spinner();
-                ui.label(RichText::new("Working…").small().color(theme::ACCENT));
+                ui.label(RichText::new("Working…").small().color(theme::accent()));
             }
         });
     });
@@ -40,7 +42,7 @@ pub fn draw(
     ui.add_space(8.0);
 
     if session.transcript.is_empty() {
-        return welcome_body(ui, &session.cwd, true);
+        return welcome_body(ui, &session.cwd, true, logos);
     }
 
     let mut selection = session.selected_tool;
@@ -64,7 +66,7 @@ pub fn draw(
                             |ui| {
                                 egui::Frame::NONE
                                     .fill(ui.visuals().selection.bg_fill)
-                                    .stroke(Stroke::new(1.0, theme::ACCENT_DIM))
+                                    .stroke(Stroke::new(1.0, theme::accent_dim()))
                                     .corner_radius(12)
                                     .inner_margin(Margin::same(12))
                                     .show(ui, |ui| {
@@ -87,7 +89,7 @@ pub fn draw(
                             ui.label(
                                 RichText::new("●")
                                     .size(8.0)
-                                    .color(theme::ACCENT),
+                                    .color(theme::accent()),
                             );
                             ui.label(
                                 RichText::new("Command Code")
@@ -152,7 +154,7 @@ pub fn draw(
                                 RichText::new("Plan")
                                     .small()
                                     .strong()
-                                    .color(theme::ACCENT),
+                                    .color(theme::accent()),
                             );
                             ui.add_space(4.0);
                             for entry in entries {
@@ -219,8 +221,8 @@ pub fn draw(
     None
 }
 
-pub fn welcome(ui: &mut egui::Ui, cwd: &std::path::Path) -> Option<String> {
-    welcome_body(ui, cwd, false)
+pub fn welcome(ui: &mut egui::Ui, cwd: &std::path::Path, logos: &Logos) -> Option<String> {
+    welcome_body(ui, cwd, false, logos)
 }
 
 fn usage_inline(ui: &mut egui::Ui, used: u64, size: u64) {
@@ -241,11 +243,16 @@ fn usage_inline(ui: &mut egui::Ui, used: u64, size: u64) {
     let filled =
         egui::Rect::from_min_size(rect.min, egui::vec2(rect.width() * ratio, rect.height()));
     ui.painter()
-        .rect_filled(filled, egui::CornerRadius::same(2), theme::ACCENT);
+        .rect_filled(filled, egui::CornerRadius::same(2), theme::accent());
     ui.add_space(4.0);
 }
 
-fn welcome_body(ui: &mut egui::Ui, cwd: &std::path::Path, in_session: bool) -> Option<String> {
+fn welcome_body(
+    ui: &mut egui::Ui,
+    cwd: &std::path::Path,
+    in_session: bool,
+    logos: &Logos,
+) -> Option<String> {
     let mut suggestion = None;
 
     egui::ScrollArea::vertical()
@@ -253,7 +260,7 @@ fn welcome_body(ui: &mut egui::Ui, cwd: &std::path::Path, in_session: bool) -> O
         .show(ui, |ui| {
             ui.add_space(if in_session { 48.0 } else { 90.0 });
             ui.vertical_centered(|ui| {
-                theme::brand(ui);
+                logos.show_wordmark(ui, 32.0).on_hover_text("Command Code");
                 ui.add_space(12.0);
                 ui.label(
                     RichText::new("What are we building?")

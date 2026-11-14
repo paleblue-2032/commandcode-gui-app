@@ -16,7 +16,8 @@ existing CLI login and the same sessions as the terminal client.
 - Model, reasoning effort, and mode switching from the session bar
 - Context usage indicator
 - Command palette for ACP-advertised slash commands
-- Dark and light themes, configurable font scale
+- Dark and light themes, configurable accent color and font scale
+- Official Command Code logo and app icon
 - Responsive layout:
   - sidebar collapses below 620 px
   - tool details become an overlay below 1080 px
@@ -57,6 +58,28 @@ commandcode --no-auto-update acp
 `--no-auto-update` avoids writes to the Nix store. Change the binary or
 arguments in Settings, then use “Reconnect agent”.
 
+### Install through a flake
+
+Add the repository as a flake input:
+
+```nix
+commandcode-gui-app = {
+  url = "github:paleblue-2032/commandcode-gui-app";
+  inputs.nixpkgs.follows = "nixpkgs";
+};
+```
+
+Then add the package to home-manager:
+
+```nix
+home.packages = [
+  inputs.commandcode-gui-app.packages.${pkgs.system}.default
+];
+```
+
+The package includes the official icon and a desktop entry, so it also appears
+in application launchers.
+
 ## Keyboard
 
 | Key | Action |
@@ -83,6 +106,7 @@ Notable options:
 - `agent_binary` / `agent_args`
 - `default_cwd`
 - `theme`: `system`, `dark`, or `light`
+- `accent_color`: RGB array, e.g. `[232, 181, 102]`
 - `font_scale`
 - `show_thoughts`
 - `permission_policy`: `ask`, `auto_allow_reads`, or `yolo`

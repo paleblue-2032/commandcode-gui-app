@@ -74,9 +74,9 @@ pub fn draw(
                         let button = egui::Button::new(
                             RichText::new("Send  ↵")
                                 .strong()
-                                .color(egui::Color32::from_rgb(24, 20, 12)),
+                                .color(theme::accent_text()),
                         )
-                        .fill(theme::ACCENT)
+                        .fill(theme::accent())
                         .stroke(Stroke::NONE)
                         .corner_radius(CornerRadius::same(8))
                         .min_size(egui::vec2(88.0, 30.0));

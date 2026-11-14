@@ -168,7 +168,7 @@ fn draw_session_row(
             egui::Color32::TRANSPARENT
         };
         let stroke = if selected {
-            Stroke::new(1.0, theme::ACCENT_DIM)
+            Stroke::new(1.0, theme::accent_dim())
         } else {
             Stroke::NONE
         };
@@ -186,7 +186,7 @@ fn draw_session_row(
                 egui::vec2(3.0, rect.height() - 20.0),
             );
             ui.painter()
-                .rect_filled(bar, CornerRadius::same(2), theme::ACCENT);
+                .rect_filled(bar, CornerRadius::same(2), theme::accent());
         }
 
         let inner = rect.shrink2(egui::vec2(12.0, 6.0));

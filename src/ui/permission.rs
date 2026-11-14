@@ -73,11 +73,11 @@ pub fn draw(ctx: &egui::Context, request: &RequestPermissionRequest) -> Option<P
             for option in &request.options {
                 let (fill, stroke, text) = match option.kind {
                     PermissionOptionKind::AllowOnce => {
-                        (theme::ACCENT, Stroke::NONE, Color32::from_rgb(24, 20, 12))
+                        (theme::accent(), Stroke::NONE, theme::accent_text())
                     }
                     PermissionOptionKind::AllowAlways => (
                         ui.visuals().faint_bg_color,
-                        Stroke::new(1.0, theme::ACCENT_DIM),
+                        Stroke::new(1.0, theme::accent_dim()),
                         ui.visuals().text_color(),
                     ),
                     PermissionOptionKind::RejectOnce => (

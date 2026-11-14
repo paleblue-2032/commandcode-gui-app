@@ -100,6 +100,21 @@ pub fn draw(
                             });
                             ui.end_row();
 
+                            field_label(ui, "Accent");
+                            ui.horizontal_wrapped(|ui| {
+                                for (name, rgb) in ACCENT_PRESETS {
+                                    let response =
+                                        color_swatch(ui, *rgb, settings.accent_color == *rgb)
+                                            .on_hover_text(*name);
+                                    if response.clicked() {
+                                        settings.accent_color = *rgb;
+                                    }
+                                }
+                                ui.color_edit_button_srgb(&mut settings.accent_color)
+                                    .on_hover_text("Custom accent color");
+                            });
+                            ui.end_row();
+
                             field_label(ui, "Font scale");
                             ui.add(
                                 egui::Slider::new(&mut settings.font_scale, 0.75..=1.5)
@@ -160,9 +175,9 @@ pub fn draw(
                 let save = egui::Button::new(
                     RichText::new("Save changes")
                         .strong()
-                        .color(egui::Color32::from_rgb(24, 20, 12)),
+                        .color(theme::accent_text()),
                 )
-                .fill(theme::ACCENT)
+                .fill(theme::accent())
                 .stroke(Stroke::NONE)
                 .corner_radius(CornerRadius::same(8))
                 .min_size(egui::vec2(120.0, 32.0));
@@ -191,10 +206,33 @@ fn section(ui: &mut egui::Ui, title: &str) {
         RichText::new(title.to_uppercase())
             .small()
             .strong()
-            .color(theme::ACCENT),
+            .color(theme::accent()),
     );
     ui.add_space(4.0);
 }
+
+fn color_swatch(ui: &mut egui::Ui, rgb: [u8; 3], selected: bool) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(22.0, 22.0), egui::Sense::click());
+    let color = egui::Color32::from_rgb(rgb[0], rgb[1], rgb[2]);
+    ui.painter().circle_filled(rect.center(), 8.5, color);
+    if selected {
+        ui.painter().circle_stroke(
+            rect.center(),
+            10.5,
+            egui::Stroke::new(2.0, ui.visuals().text_color()),
+        );
+    }
+    response
+}
+
+const ACCENT_PRESETS: &[(&str, [u8; 3])] = &[
+    ("Amber", [232, 181, 102]),
+    ("Coral", [232, 132, 107]),
+    ("Mint", [124, 201, 154]),
+    ("Sky", [126, 177, 214]),
+    ("Lilac", [180, 155, 224]),
+    ("Rose", [229, 138, 177]),
+];
 
 fn field_label(ui: &mut egui::Ui, text: &str) {
     ui.label(RichText::new(text).color(theme::muted(ui)));

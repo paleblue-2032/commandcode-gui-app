@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Command Code
+GenericName=Coding Agent
+Comment=Desktop client for Command Code
+Exec=commandcode-gui-app
+Icon=commandcode-gui-app
+Terminal=false
+Categories=Development;Utility;
+Keywords=commandcode;ai;coding;agent;
+StartupWMClass=Command Code GUI

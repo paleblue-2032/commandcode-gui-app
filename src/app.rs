@@ -12,6 +12,7 @@ use egui_file_dialog::FileDialog;
 use tokio::sync::oneshot;
 
 use crate::acp::{self, AcpCommand, AcpEvent, AcpHandle, AgentConfig};
+use crate::branding::Logos;
 use crate::catalog::{self, SessionSummary};
 use crate::model::SessionView;
 use crate::settings::{PermissionPolicy, Settings, ThemePreference};
@@ -55,18 +56,22 @@ pub struct App {
     error_banner: Option<String>,
     file_dialog: FileDialog,
     applied_theme: ThemePreference,
+    applied_accent: [u8; 3],
     applied_font_scale: f32,
     focus_composer: bool,
     pending_prompt: Option<String>,
+    logos: Logos,
 }
 
 impl App {
     pub fn new(cc: &eframe::CreationContext<'_>, settings: Settings) -> Self {
-        theme::apply(&cc.egui_ctx);
+        let accent = accent_color(settings.accent_color);
+        theme::apply(&cc.egui_ctx, accent);
         cc.egui_ctx.set_theme(egui_theme(settings.theme));
         cc.egui_ctx
             .set_zoom_factor(settings.font_scale.clamp(0.75, 1.5));
         install_cjk_font(&cc.egui_ctx);
+        let logos = Logos::load(&cc.egui_ctx);
 
         let cwd = settings
             .default_cwd
@@ -92,6 +97,7 @@ impl App {
                 .map(|path| path.display().to_string())
                 .unwrap_or_default(),
             applied_theme: settings.theme,
+            applied_accent: settings.accent_color,
             applied_font_scale: settings.font_scale,
             settings,
             connection: ConnectionState::Connecting,
@@ -110,6 +116,7 @@ impl App {
             file_dialog,
             focus_composer: false,
             pending_prompt: None,
+            logos,
         }
     }
 
@@ -386,10 +393,13 @@ impl App {
     }
 
     fn apply_appearance(&mut self, ctx: &egui::Context) {
-        if self.applied_theme != self.settings.theme {
-            theme::apply(ctx);
+        if self.applied_theme != self.settings.theme
+            || self.applied_accent != self.settings.accent_color
+        {
+            theme::apply(ctx, accent_color(self.settings.accent_color));
             ctx.set_theme(egui_theme(self.settings.theme));
             self.applied_theme = self.settings.theme;
+            self.applied_accent = self.settings.accent_color;
         }
         if (self.applied_font_scale - self.settings.font_scale).abs() > f32::EPSILON {
             let scale = self.settings.font_scale.clamp(0.75, 1.5);
@@ -408,12 +418,14 @@ impl App {
 
         ui.add_space(2.0);
         ui.horizontal(|ui| {
-            theme::brand(ui);
-            if !compact {
-                ui.add_space(2.0);
-                ui.label(RichText::new("Command Code").strong().size(15.0));
-                ui.add_space(4.0);
+            if compact {
+                self.logos.show_icon(ui, 22.0).on_hover_text("Command Code");
+            } else {
+                self.logos
+                    .show_wordmark(ui, 20.0)
+                    .on_hover_text("Command Code");
             }
+            ui.add_space(4.0);
             self.draw_connection_pill(ui);
             if !compact {
                 ui.add_space(2.0);
@@ -461,14 +473,7 @@ impl App {
                 }
 
                 if ui
-                    .add_enabled(
-                        connected,
-                        theme::accent_button(
-                            RichText::new("+ New")
-                                .strong()
-                                .color(Color32::from_rgb(24, 20, 12)),
-                        ),
-                    )
+                    .add_enabled(connected, theme::accent_button("+ New"))
                     .clicked()
                 {
                     new_session = true;
@@ -699,9 +704,9 @@ impl App {
         let show_thoughts = self.settings.show_thoughts;
         let cache = &mut self.markdown_cache;
         let suggestion = if let Some(session) = &mut self.active {
-            ui::chat::draw(ui, session, cache, show_thoughts)
+            ui::chat::draw(ui, session, cache, show_thoughts, &self.logos)
         } else {
-            ui::chat::welcome(ui, &self.cwd)
+            ui::chat::welcome(ui, &self.cwd, &self.logos)
         };
 
         if let Some(prompt) = suggestion {
@@ -1018,12 +1023,16 @@ impl eframe::App for App {
             .show(ui, |ui| self.draw_composer(ui));
 
         egui::CentralPanel::default()
-            .frame(egui::Frame::NONE.inner_margin(egui::Margin {
-                left: side_margin,
-                right: side_margin,
-                top: 4,
-                bottom: 4,
-            }))
+            .frame(
+                egui::Frame::NONE
+                    .fill(ui.visuals().panel_fill)
+                    .inner_margin(egui::Margin {
+                        left: side_margin,
+                        right: side_margin,
+                        top: 4,
+                        bottom: 4,
+                    }),
+            )
             .show(ui, |ui| self.draw_chat(ui));
 
         self.draw_sessions_modal(&ctx);
@@ -1053,6 +1062,10 @@ fn egui_theme(theme: ThemePreference) -> egui::ThemePreference {
         ThemePreference::Dark => egui::ThemePreference::Dark,
         ThemePreference::Light => egui::ThemePreference::Light,
     }
+}
+
+fn accent_color(rgb: [u8; 3]) -> Color32 {
+    Color32::from_rgb(rgb[0], rgb[1], rgb[2])
 }
 
 fn project_name(path: &Path) -> String {

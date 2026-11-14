@@ -29,6 +29,7 @@ pub struct Settings {
     pub agent_args: Vec<String>,
     pub default_cwd: Option<PathBuf>,
     pub theme: ThemePreference,
+    pub accent_color: [u8; 3],
     pub font_scale: f32,
     pub show_thoughts: bool,
     pub permission_policy: PermissionPolicy,
@@ -42,6 +43,7 @@ impl Default for Settings {
             agent_args: vec!["--no-auto-update".to_string(), "acp".to_string()],
             default_cwd: None,
             theme: ThemePreference::System,
+            accent_color: [232, 181, 102],
             font_scale: 1.0,
             show_thoughts: true,
             permission_policy: PermissionPolicy::Ask,
@@ -76,5 +78,27 @@ impl Settings {
         if let Ok(content) = serde_json::to_string_pretty(self) {
             let _ = fs::write(path, content);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_accent_uses_default() {
+        let settings: Settings = serde_json::from_str(r#"{"theme":"dark"}"#).unwrap();
+        assert_eq!(settings.accent_color, [232, 181, 102]);
+    }
+
+    #[test]
+    fn accent_round_trips() {
+        let settings = Settings {
+            accent_color: [124, 201, 154],
+            ..Settings::default()
+        };
+        let json = serde_json::to_string(&settings).unwrap();
+        let loaded: Settings = serde_json::from_str(&json).unwrap();
+        assert_eq!(loaded.accent_color, [124, 201, 154]);
     }
 }

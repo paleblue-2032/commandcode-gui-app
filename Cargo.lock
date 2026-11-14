@@ -550,6 +550,7 @@ dependencies = [
  "egui",
  "egui-file-dialog",
  "egui_commonmark",
+ "image",
  "open",
  "serde",
  "serde_json",
